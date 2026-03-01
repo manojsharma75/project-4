@@ -1,4 +1,3 @@
-
 name: Terraform Destroy
 
 on:
@@ -12,37 +11,33 @@ permissions:
     contents: read
 
 jobs:
-    destroy:
-        if: ${{ github.event.inputs.confirm_destroy == 'DESTROY' }}
-        runs-on: ubuntu-latest
+  terraform-destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
 
-        env:
-            GOOGLE_CLOUD_PROJECT: my-ever-first-project
-            GOOGLE_CLOUD_REGION: us-central1
-            GOOGLE_CLOUD_ZONE: us-central1-a
+    env:
+      TF_VAR_project: my-ever-first-project   # Replace with your GCP project ID
+      GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_CREDENTIALS }} # Service account JSON stored in GitHub Secrets
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Setup Terraform
-              uses: hashicorp/setup-terraform@v3
-              with:
-                  terraform_version: 1.8.5
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6   # Compatible with "~> 1.0" constraint
 
-            - name: Authenticate to GCP
-              uses: google-github-actions/auth@v2
-              with:
-                  credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-            - name: Terraform Init
-              run: terraform init -input=false
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
 
-            - name: Terraform Destroy Plan
-              run: terraform plan -destroy -out=destroy.tfplan
+      - name: Terraform Init
+        run: terraform init
 
-            - name: Show Plan
-              run: terraform show destroy.tfplan
-
-            - name: Terraform Destroy
-              run: terraform apply -auto-approve destroy.tfplan
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -input=false
