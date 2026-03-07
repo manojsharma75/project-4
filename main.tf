@@ -100,6 +100,7 @@ resource "google_sql_database_instance" "postgres_instance" {
   name              = "postgres-ha"
   region            = "us-central1"
   database_version  = "POSTGRES_14"
+   deletion_protection = false
 
   settings {
     tier              = "db-f1-micro"        # Free-tier eligible DB tier
