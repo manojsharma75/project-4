@@ -1,5 +1,3 @@
-
-
 name: Terraform Destroy
 
 on:
@@ -13,42 +11,34 @@ permissions:
     contents: read
 
 jobs:
-  terraform:
+  terraform-destroy:
     runs-on: ubuntu-latest
 
+    env:
+      GOOGLE_CLOUD_PROJECT: my-ever-first-project
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      TF_VAR_project: my-ever-first-project
+      TF_VAR_region: us-central1
+
     steps:
-      # Step 1: Checkout repository code
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Step 2: Setup Terraform CLI
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.5.7   # Match your required version (~> 1.0)
+          terraform_version: 1.6.6   # Matches your "~> 1.0" constraint
 
-      # Step 3: Authenticate with Google Cloud
-      - name: Authenticate to GCP
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-          # GCP_SA_KEY must be added in GitHub Secrets (JSON key of service account)
 
-      # Step 4: Setup gcloud CLI (optional, useful for debugging)
-      - name: Setup gcloud
+      - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: my-ever-first-project
-          export_default_credentials: true
 
-      # Step 5: Initialize Terraform (downloads providers, sets up backend)
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="bucket=manojsharma-terraform-state" -backend-config="prefix=project-4/state"
 
-      # Step 6: Validate Terraform syntax
-      - name: Terraform Validate
-        run: terraform validate
-
-      # Step 7: Run Terraform Destroy (tears down all resources)
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve -input=false
+        run: terraform destroy -auto-approve -refresh=true -parallelism=1

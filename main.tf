@@ -91,7 +91,11 @@ resource "google_service_networking_connection" "private_vpc_connection" {
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_range.name]
 
-  depends_on = [google_project_service.service_networking]
+  depends_on = [google_project_service.service_networking,
+  google_sql_database_instance.postgres_instance,
+  google_sql_database.default_db,
+  google_sql_user.db_user
+]
 }
 
 # --- Cloud SQL Instance ---
@@ -111,6 +115,7 @@ resource "google_sql_database_instance" "postgres_instance" {
       private_network = google_compute_network.main_vpc.self_link
     }
   }
+  
 
   # Ensure SQL waits until peering is ready
   depends_on = [
